@@ -44,29 +44,34 @@ public class Creator {
     private String sPackageName;
     private String sName;
     private String sPackageDirs;
-    private String sCurrentDir = "e:\\LibGDX_template\\template\\";
+    private String sSourceDir = "e:\\LibGDX_template\\template\\";
 
     private EventListener eventListener;
     private int count;
 
-    Creator(String sProjectName, String sPackageName, EventListener eventListener) {
+    Creator(EventListener eventListener) {
         this.eventListener = eventListener;
-        // Check strings for null etc
-        if (sProjectName.length() < 1) sProjectName = "MyGame";
-        if (sPackageName.length() < 1) sPackageName = "org.gamepackage";
-        this.sProjectName = sProjectName.trim();
-        this.sPackageName = sPackageName.trim();
-        sName = sProjectName.toLowerCase();
-        sPackageDirs = sPackageName.replace(".", "/");
-//        startTheDance();
-        ArrayList<File> files = new ArrayList<>();
-        sCurrentDir = "e:\\LibGDX_template\\template\\";
-        listDirectory(sCurrentDir, files);
-        showFiles(files);
+
     }
 
-    void setCurrentDir(String sCurrentDir) {
-        this.sCurrentDir = sCurrentDir;
+    void startGenerate(String sProjectName, String sPackageName, String sSource) {
+//        this.sProjectName = sProjectName;
+//        this.sPackageName = sPackageName;
+        // Check strings for null etc
+        if (sProjectName != null && sPackageName != null && sSource != null) {
+            if (sProjectName.length() < 1) sProjectName = "MyGame";
+            if (sPackageName.length() < 1) sPackageName = "org.gamepackage";
+            this.sProjectName = sProjectName.trim();
+            this.sPackageName = sPackageName.trim();
+            this.sSourceDir = sSource;
+            sName = sProjectName.toLowerCase();
+            sPackageDirs = sPackageName.replace(".", "/");
+//        startTheDance();
+            ArrayList<File> files = new ArrayList<>();
+//            sSourceDir = "e:\\LibGDX_template\\template\\";
+            listDirectory(sSourceDir, files);
+            showFiles(files);
+        }
     }
 
     private void showFiles(ArrayList<File> files) {
@@ -75,11 +80,15 @@ public class Creator {
 //            System.out.println(String.format("%s", file.getAbsolutePath()));
             System.out.println(String.format("%s", sAbsPath));
             String newPath = sAbsPath
-                    .replace(sCurrentDir, "")
+                    .replace(sSourceDir, "")
                     .replace("{$PACKAGE}", sPackageName)
                     .replace("{$NAME}", sProjectName);
             System.out.println(String.format("* %s", newPath));
         }
+
+        // Mission Complete
+        eventListener.onEvent("New -> Import Project ...");
+        eventListener.complete();
     }
 
     private void listDirectory(String directoryName, ArrayList<File> files) {

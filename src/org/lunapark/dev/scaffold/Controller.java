@@ -1,14 +1,8 @@
 package org.lunapark.dev.scaffold;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -27,12 +21,22 @@ public class Controller implements EventListener {
 
     private Stage stage;
     private Creator creator;
+    private String srcDir;
+
+    public Controller() {
+        creator = new Creator(this);
+    }
 
     public void onGenerateClick() {
         btnGenerate.setDisable(true);
+        btnSrc.setDisable(true);
+        tfName.setDisable(true);
+        tfPackage.setDisable(true);
         String sProjectName = tfName.getText();
         String sPackage = tfPackage.getText();
-        creator = new Creator(sProjectName, sPackage, this);
+//        creator.setsProjectName(sProjectName);
+//        creator.setsPackageName(sPackage);
+        creator.startGenerate(sProjectName, sPackage, srcDir);
     }
 
     void setStage(Stage stage) {
@@ -40,7 +44,6 @@ public class Controller implements EventListener {
     }
 
     public void onSetSrcClick() {
-
         try {
             showDialog(stage);
         } catch (Exception e) {
@@ -54,6 +57,7 @@ public class Controller implements EventListener {
         directoryChooser.setInitialDirectory(new File(System.getProperty("user.home")));
         File dir = directoryChooser.showDialog(primaryStage);
         if (dir != null) {
+            btnGenerate.setDisable(false);
             setSource(dir);
         }
     }
@@ -78,6 +82,7 @@ public class Controller implements EventListener {
         String sSource = file.getAbsolutePath();
         System.out.println(String.format("set source: %s", sSource));
         btnSrc.setText(sSource);
-        creator.setCurrentDir(sSource);
+        srcDir = sSource;
+//        creator.setSourceDir(sSource);
     }
 }

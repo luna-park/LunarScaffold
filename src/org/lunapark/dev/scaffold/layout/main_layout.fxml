@@ -41,8 +41,10 @@
                 <DropShadow offsetX="3.0" offsetY="3.0" />
             </effect>
         </TextField>
-        <Button fx:id="btnGenerate" accessibleRoleDescription="Begin scaffolding" cache="true" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false"
-                onAction="#onGenerateClick" prefHeight="25.0" prefWidth="100.0" text="Generate" textAlignment="RIGHT" textFill="#1b5f8d" GridPane.rowIndex="4" />
+        <Button fx:id="btnGenerate" accessibleRoleDescription="Begin scaffolding" cache="true"
+                maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onGenerateClick"
+                prefHeight="25.0" prefWidth="100.0" text="Generate" textAlignment="RIGHT" textFill="#1b5f8d"
+                GridPane.rowIndex="4" disable="true"/>
         <Button fx:id="btnQuit" cache="true" mnemonicParsing="false" onAction="#closeApp" text="Quit" textFill="#c61b1b" GridPane.columnIndex="1" GridPane.rowIndex="4" />
         <Circle fx:id="circle" fill="#1fff52" radius="12.0" stroke="BLACK" strokeMiterLimit="1.0" strokeType="INSIDE" visible="false" GridPane.rowIndex="5" />
         <Label fx:id="lblStatus" maxWidth="149" text="Ready" GridPane.columnIndex="1" GridPane.rowIndex="5" />
