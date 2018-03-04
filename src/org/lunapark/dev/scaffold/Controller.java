@@ -19,26 +19,28 @@ public class Controller implements EventListener {
     public Circle circle;
     public Label lblStatus;
     public Button btnSrc;
+    public Button btnTarget;
 
     private Stage stage;
     private Creator creator;
-    private String srcDir;
+    private String srcDir, targetDir;
 
     public Controller() {
         creator = new Creator(this);
     }
 
     public void onGenerateClick() {
-        if (srcDir != null) {
-            btnGenerate.setDisable(true);
-            btnSrc.setDisable(true);
-            tfName.setDisable(true);
-            tfPackage.setDisable(true);
+        disableAll(true);
+        String sProjectName = tfName.getText();
+        String sPackage = tfPackage.getText();
+        creator.startGenerate(sProjectName, sPackage, srcDir, targetDir);
+    }
 
-            String sProjectName = tfName.getText();
-            String sPackage = tfPackage.getText();
-            creator.startGenerate(sProjectName, sPackage, srcDir);
-        }
+    private void disableAll(boolean isDisable) {
+        btnGenerate.setDisable(isDisable);
+        btnSrc.setDisable(isDisable);
+        tfName.setDisable(isDisable);
+        tfPackage.setDisable(isDisable);
     }
 
     void setStage(Stage stage) {
@@ -47,25 +49,35 @@ public class Controller implements EventListener {
 
     public void onSetSrcClick() {
         try {
-            showDialog(stage);
+            setSource(showDialog(stage));
         } catch (Exception e) {
             System.out.println(String.format("Error: %s", e.getMessage()));
-            showWarning(e.getMessage());
+//            showWarning(e.getMessage());
         }
     }
 
-    private void showDialog(Stage primaryStage) throws Exception {
+    public void onSetTargetClick() {
+        try {
+            setTargetDir(showDialog(stage));
+        } catch (Exception e) {
+            System.out.println(String.format("Error: %s", e.getMessage()));
+//            showWarning(e.getMessage());
+        }
+    }
+
+    private String showDialog(Stage primaryStage) throws Exception {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Select source directory");
-//        TODO Mock data
-//        String defaultDir = System.getProperty("user.dir");
-        String defaultDir = "e:\\LibGDX_template\\template\\";
+        directoryChooser.setTitle("Select directory");
+
+        String defaultDir = System.getProperty("user.dir");
+        //        String defaultDir = "e:\\LibGDX_template\\template\\";
         directoryChooser.setInitialDirectory(new File(defaultDir));
         File dir = directoryChooser.showDialog(primaryStage);
-        if (dir != null) {
-            btnGenerate.setDisable(false);
-            setSource(dir);
-        }
+        return dir.getAbsolutePath();
+    }
+
+    private void checkFolders() {
+        if (srcDir != null && targetDir != null) btnGenerate.setDisable(false);
     }
 
     public void closeApp() {
@@ -75,6 +87,7 @@ public class Controller implements EventListener {
     @Override
     public void complete() {
         circle.setVisible(true);
+        disableAll(false);
     }
 
     @Override
@@ -83,13 +96,19 @@ public class Controller implements EventListener {
         System.out.println(message);
     }
 
-    @Override
-    public void setSource(File file) {
-        String sSource = file.getAbsolutePath();
-        System.out.println(String.format("set source: %s", sSource));
-        btnSrc.setText(sSource);
-        srcDir = sSource;
-//        creator.setSourceDir(sSource);
+
+    private void setSource(String sourcePath) {
+        System.out.println(String.format("set source: %s", sourcePath));
+        btnSrc.setText(sourcePath);
+        srcDir = sourcePath;
+        checkFolders();
+    }
+
+    private void setTargetDir(String targetPath) {
+        System.out.println(String.format("set target: %s", targetPath));
+        btnTarget.setText(targetPath);
+        targetDir = targetPath;
+        checkFolders();
     }
 
     private void showWarning(String message) {
@@ -97,7 +116,6 @@ public class Controller implements EventListener {
         alert.setTitle("Lunar Scaffolder");
         alert.setHeaderText(null);
         alert.setContentText(message);
-
         alert.showAndWait();
     }
 }
