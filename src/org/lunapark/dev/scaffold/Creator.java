@@ -3,10 +3,15 @@ package org.lunapark.dev.scaffold;
 import org.lunapark.dev.scaffold.layout.EventListener;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Creator {
 //    ProjectName /app/src/main/java/ com/package / sName
@@ -46,6 +51,9 @@ public class Creator {
     private String sName;
     private String sPackageDirs;
     private String sSourceDir = "e:\\LibGDX_template\\template\\";
+
+    private String sReplacePackageMask = "{$PACKAGE}";
+    private String sReplaceNameMask = "{$NAME}";
 
     private Set<String> excludeSet;
 
@@ -92,16 +100,17 @@ public class Creator {
             }
             String newPath = sAbsPath
                     .replace(sSourceDir, targetDir)
-                    .replace("{$PACKAGE}", sPackageName)
-                    .replace("{$NAME}", sProjectName);
+                    .replace(sReplacePackageMask, sPackageName)
+                    .replace(sReplaceNameMask, sProjectName);
 
             if (excludeSet.contains(ext)) {
                 copyFile(file, newPath);
             } else {
 
 //            System.out.println(String.format("* %s", newPath));
-                String contentSrc = readFile(sAbsPath);
-                createFile(newPath, contentSrc);
+//                String contentSrc = readFile(sAbsPath);
+//                createFile(newPath, contentSrc);
+                modifyAndCopyFile(file, newPath);
             }
         }
 
@@ -112,13 +121,12 @@ public class Creator {
 
     private void copyFile(File file, String newPath) {
         File fileTarget = new File(newPath);
-        if (fileTarget.getParentFile().mkdirs()) {
-            System.out.println(String.format("Copy: %s", fileTarget.getName()));
-            try {
-                Files.copy(file.toPath(), fileTarget.toPath());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        fileTarget.getParentFile().mkdirs();
+        System.out.println(String.format("Copy: %s", fileTarget.getName()));
+        try {
+            Files.copy(file.toPath(), fileTarget.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -175,87 +183,35 @@ public class Creator {
         }
     }
 
-    private void startTheDance() {
-        // Make dirs
-        // If ProjectDir exist add index
-        createRootDir(sProjectName);
+    private void modifyAndCopyFile(File file, String newPath) {
+        copyFile(file, newPath);
+        Path path = Paths.get(newPath);
+        Charset charset = StandardCharsets.UTF_8;
 
-        String appSrcDir = sProjectName + appMaskSrc + sPackageDirs + "/" + sName;
-        createDirs(appSrcDir);
-        String appResDir = sProjectName + appMaskRes;
-        createDirs(appResDir);
-
-        String coreSrcDir = sProjectName + coreMask + sPackageDirs + "/" + sName;
-        createDirs(coreSrcDir);
-
-        String desktopSrcDir = sProjectName + desktopMask + sPackageDirs + "/" + sName;
-        createDirs(desktopSrcDir);
-
-        // Create assets dir
-        for (String s : assetsDirs) {
-            createDirs(sProjectName + appMaskAssets + s);
-        }
-
-        // Create files
-        String sPackageNameForFiles = sPackageName + "." + sName;
-
-        createFile(desktopSrcDir + "/DesktopLauncher.java", String.format(fileDesktopLauncher, sPackageNameForFiles));
-        createFile(coreSrcDir + "/Game.java", String.format(fileGame, sPackageNameForFiles));
-
-        String sGragleRootPath = sProjectName + "/build.gradle";
-        createFile(sGragleRootPath, fileGradleRoot);
-
-        String sSettingsPath = sProjectName + "/settings.gradle";
-        createFile(sSettingsPath, "include ':app', ':core', ':desktop'");
-
-        //// Android section
-        createFile(appSrcDir + "/MainActivity.java", String.format(fileActivity, sPackageNameForFiles));
-        String sManifestPath = sProjectName + appMaskManifest + "AndroidManifest.xml";
-        createFile(sManifestPath, String.format(fileManifest, sPackageNameForFiles));
-        createFile(appResDir + "/strings.xml", String.format(fileStrings, sProjectName));
-        createFile(appResDir + "/styles.xml", fileStyles);
-        String sGradleAppPath = sProjectName + appMaskGradle + "build.gradle";
-        createFile(sGradleAppPath, String.format(fileGradleApp, sPackageNameForFiles));
-
-        // Mission Complete
-        eventListener.onEvent("New -> Import Project ...");
-        eventListener.complete();
-    }
-
-    private void createRootDir(String dirName) {
-        boolean dirCreated;
-        do {
-            dirCreated = new File(dirName).mkdir();
-            if (!dirCreated) {
-                count++;
-                dirName += String.valueOf(count);
-            }
-
-        } while (!dirCreated);
-
-        sProjectName = dirName;
-    }
-
-    private void createDirs(String sPath) {
-        if (new File(sPath).mkdirs()) {
-            eventListener.onEvent("Make dir: " + sPath);
-        } else {
-            fail("Make dir");
+        String content;
+        try {
+            content = new String(Files.readAllBytes(path), charset);
+            content = content.replace(sReplacePackageMask, sPackageName);
+            content = content.replace(sReplaceNameMask, sProjectName);
+            Files.write(path, content.getBytes(charset));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private void createFile(String name, String content) {
+    private void createFile(String name, String content1) {
 
         System.out.println(String.format("Create file: %s", name));
 
 //        System.out.println(name);
 //        System.out.println(content);
 
-        content = content.replace("{$PACKAGE}", sPackageName)
-                .replace("{$NAME}", sProjectName);
+//        content = content.replace("{$PACKAGE}", sPackageName)
+//                .replace("{$NAME}", sProjectName);
 
         File file = new File(name);
         file.getParentFile().mkdirs();
+
 
         try {
             //проверяем, что если файл не существует то создаем его
@@ -263,12 +219,23 @@ public class Creator {
                 file.createNewFile();
             }
 
+//            Path path = Paths.get(name);
+//            Charset charset = StandardCharsets.UTF_8;
+//
+//            String content;
+//
+//            content = new String(Files.readAllBytes(path), charset);
+//            content = content.replace(sReplacePackageMask, sPackageName)
+//                    .replace(sReplaceNameMask, sProjectName);
+//            Files.write(path, content.getBytes(charset));
+
+
             //PrintWriter обеспечит возможности записи в файл
             PrintWriter out = new PrintWriter(file.getAbsoluteFile());
 
             try {
                 //Записываем текст s файл
-                out.print(content);
+                out.print(content1);
                 eventListener.onEvent("Created " + name);
             } catch (Exception e1) {
                 fail("Write to file" + e1.getMessage());
