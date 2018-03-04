@@ -31,7 +31,7 @@
                 <Font name="System Bold" size="14.0" />
             </font>
         </Label>
-        <TextField fx:id="tfName" promptText="Enter project name" text="MyGame" GridPane.columnIndex="1" GridPane.rowIndex="1">
+        <TextField fx:id="tfName" promptText="Enter project name" text="ProjectName" GridPane.columnIndex="1" GridPane.rowIndex="1">
             <effect>
                 <DropShadow offsetX="3.0" offsetY="3.0" />
             </effect>

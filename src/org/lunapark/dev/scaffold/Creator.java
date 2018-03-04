@@ -2,10 +2,11 @@ package org.lunapark.dev.scaffold;
 
 import org.lunapark.dev.scaffold.layout.EventListener;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Creator {
 //    ProjectName /app/src/main/java/ com/package / sName
@@ -46,6 +47,8 @@ public class Creator {
     private String sPackageDirs;
     private String sSourceDir = "e:\\LibGDX_template\\template\\";
 
+    private Set<String> excludeSet;
+
     private EventListener eventListener;
     private int count;
 
@@ -75,20 +78,83 @@ public class Creator {
     }
 
     private void showFiles(ArrayList<File> files) {
+        createExclude(files);
+//        TODO Mock data
+//        String targetDir = System.getProperty("user.dir") + "\\" + sProjectName;
+        String targetDir = "E:\\__Testing\\" + sProjectName;
         for (File file : files) {
             String sAbsPath = file.getAbsolutePath();
-//            System.out.println(String.format("%s", file.getAbsolutePath()));
-            System.out.println(String.format("%s", sAbsPath));
+
+//            System.out.println(String.format("%s", sAbsPath));
+            String ext = getFileExt(sAbsPath);
+            if (ext.equals(".exclude")) {
+                continue;
+            }
             String newPath = sAbsPath
-                    .replace(sSourceDir, "")
+                    .replace(sSourceDir, targetDir)
                     .replace("{$PACKAGE}", sPackageName)
                     .replace("{$NAME}", sProjectName);
-            System.out.println(String.format("* %s", newPath));
+
+            if (excludeSet.contains(ext)) {
+                copyFile(file, newPath);
+            } else {
+
+//            System.out.println(String.format("* %s", newPath));
+                String contentSrc = readFile(sAbsPath);
+                createFile(newPath, contentSrc);
+            }
         }
 
         // Mission Complete
         eventListener.onEvent("New -> Import Project ...");
         eventListener.complete();
+    }
+
+    private void copyFile(File file, String newPath) {
+        File fileTarget = new File(newPath);
+        if (fileTarget.getParentFile().mkdirs()) {
+            System.out.println(String.format("Copy: %s", fileTarget.getName()));
+            try {
+                Files.copy(file.toPath(), fileTarget.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void createExclude(ArrayList<File> files) {
+        excludeSet = new HashSet<>();
+        for (File file : files) {
+            if (file.getName().equals(".exclude")) {
+                exclusions(file);
+                break;
+            }
+        }
+    }
+
+    private void exclusions(File file) {
+        String line;
+        try {
+            FileReader reader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(String.format("Ext: %s", line));
+                excludeSet.add(line);
+            }
+            bufferedReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getFileExt(String name) {
+        String extension = "";
+        int i = name.lastIndexOf('.');
+        if (i > 0) {
+            extension = name.substring(i);
+        }
+        return extension;
     }
 
     private void listDirectory(String directoryName, ArrayList<File> files) {
@@ -179,10 +245,17 @@ public class Creator {
     }
 
     private void createFile(String name, String content) {
-        System.out.println(name);
-        System.out.println(content);
+
+        System.out.println(String.format("Create file: %s", name));
+
+//        System.out.println(name);
+//        System.out.println(content);
+
+        content = content.replace("{$PACKAGE}", sPackageName)
+                .replace("{$NAME}", sProjectName);
 
         File file = new File(name);
+        file.getParentFile().mkdirs();
 
         try {
             //проверяем, что если файл не существует то создаем его
@@ -197,6 +270,8 @@ public class Creator {
                 //Записываем текст s файл
                 out.print(content);
                 eventListener.onEvent("Created " + name);
+            } catch (Exception e1) {
+                fail("Write to file" + e1.getMessage());
             } finally {
                 //После чего мы должны закрыть файл
                 //Иначе файл не запишется
@@ -205,6 +280,24 @@ public class Creator {
         } catch (IOException e) {
             fail("Create " + name);
         }
+    }
+
+    private String readFile(String name) {
+        System.out.println(String.format("Read file: %s", name));
+        StringBuilder content = new StringBuilder();
+        try {
+            FileReader reader = new FileReader(name);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+//                System.out.println(line);
+                content.append(line);
+            }
+            bufferedReader.close();
+        } catch (Exception e) {
+            fail("Read file: " + e.getMessage());
+        }
+        return content.toString();
     }
 
     private void fail(String message) {
